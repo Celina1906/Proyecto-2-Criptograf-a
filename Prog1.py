@@ -1,6 +1,7 @@
 from Crypto.Cipher import AES
 from Crypto.Random import get_random_bytes
 import json
+import datetime
 
 # Información del usuario
 user_id = "user123"
@@ -16,7 +17,7 @@ with open("user_key.bin", "wb") as f:
 
 # Mensajes que envía el AS al cliente
 TGT_key = get_random_bytes(16)
-timestamp = "2024-05-24T12:00:00"
+timestamp = str(datetime.datetime.now())
 
 # Mensaje 1: Ticket Granting Ticket (TGT)
 TGT = {

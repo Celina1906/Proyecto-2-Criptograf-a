@@ -1,6 +1,7 @@
 import json
 from Crypto.Cipher import AES
 from Crypto.Random import get_random_bytes
+import datetime
 
 # Definición de user_id y service_id
 user_id = "user123"
@@ -13,7 +14,7 @@ with open("message_to_TGS.json", "r") as f:
 # Validar el TGT y generar mensajes para el cliente
 if TGT["user_id"] == user_id:
     service_key = get_random_bytes(16)
-    timestamp = "2024-05-24T12:01:00"
+    timestamp = str(datetime.datetime.now())
 
     # Mensaje 3: Service Ticket (ST)
     ST = {

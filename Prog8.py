@@ -1,6 +1,6 @@
 from Crypto.PublicKey import RSA
-from Crypto.Cipher import PKCS1_OAEP
-import json
+from Crypto.Cipher import PKCS1_OAEP, AES
+from Crypto.Random import get_random_bytes
 
 # Generar un par de llaves RSA para el TGS
 key = RSA.generate(2048)
@@ -11,17 +11,27 @@ public_key = key.publickey().export_key()
 with open("TGS_private_key.pem", "wb") as f:
     f.write(private_key)
 
-# Supongamos que el AS ya tiene la clave pública del TGS
 # Cargar la clave pública del AS (esto sería preestablecido)
 with open("AS_public_key.pem", "rb") as f:
     AS_public_key = RSA.import_key(f.read())
 
-# Encriptar la llave privada del TGS usando la clave pública del AS
+# Generar una clave simétrica (AES)
+aes_key = get_random_bytes(32)
+
+# Encriptar la clave simétrica usando la clave pública del AS
 cipher_rsa = PKCS1_OAEP.new(AS_public_key)
-encrypted_private_key = cipher_rsa.encrypt(private_key)
+encrypted_aes_key = cipher_rsa.encrypt(aes_key)
 
-# Guardar la llave privada encriptada en un archivo
+# Encriptar la clave privada del TGS usando la clave simétrica (AES)
+cipher_aes = AES.new(aes_key, AES.MODE_EAX)
+nonce = cipher_aes.nonce
+ciphertext, tag = cipher_aes.encrypt_and_digest(private_key)
+
+# Guardar la clave simétrica encriptada y la clave privada encriptada
 with open("encrypted_TGS_private_key.bin", "wb") as f:
-    f.write(encrypted_private_key)
+    f.write(nonce + tag + ciphertext)
 
-print("Llave privada del TGS generada y enviada al AS (encrypted_TGS_private_key.bin)")
+with open("encrypted_aes_key.bin", "wb") as f:
+    f.write(encrypted_aes_key)
+
+print("Llave privada del TGS generada y enviada al AS (encrypted_TGS_private_key.bin y encrypted_aes_key.bin)")

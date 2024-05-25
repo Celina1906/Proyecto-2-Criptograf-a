@@ -1,5 +1,6 @@
 from Crypto.Cipher import AES
 import json
+import datetime
 
 # Definición de service_id
 service_id = "serviceABC"
@@ -10,7 +11,7 @@ with open("message_to_service.json", "r") as f:
 
 # Validar el ST y generar respuesta para el cliente
 if ST["service_id"] == service_id:
-    timestamp = "2024-05-24T12:02:00"
+    timestamp = str(datetime.datetime.now())
 
     # Mensaje 5: Respuesta del Servidor de Servicios
     response = {

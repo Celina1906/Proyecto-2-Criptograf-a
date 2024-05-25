@@ -1,52 +1,37 @@
-from cryptography.hazmat.primitives.asymmetric import rsa
-from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric import padding
-from cryptography.hazmat.primitives import hashes
+from Crypto.PublicKey import RSA
+from Crypto.Cipher import PKCS1_OAEP, AES
+from Crypto.Random import get_random_bytes
 
-def generate_rsa_keypair_service():
-    private_key = rsa.generate_private_key(
-        public_exponent=65537,
-        key_size=2048,
-        backend=default_backend()
-    )
-    public_key = private_key.public_key()
+# Generar un par de llaves RSA para el Servidor de Servicios
+key = RSA.generate(2048)
+private_key = key.export_key()
+public_key = key.publickey().export_key()
 
-    private_pem = private_key.private_bytes(
-        encoding=serialization.Encoding.PEM,
-        format=serialization.PrivateFormat.TraditionalOpenSSL,
-        encryption_algorithm=serialization.NoEncryption()
-    )
-    public_pem = public_key.public_bytes(
-        encoding=serialization.Encoding.PEM,
-        format=serialization.PublicFormat.SubjectPublicKeyInfo
-    )
+# Guardar la llave privada en un archivo seguro
+with open("service_private_key.pem", "wb") as f:
+    f.write(private_key)
 
-    with open("service_private_key.pem", "wb") as f:
-        f.write(private_pem)
-    with open("service_public_key.pem", "wb") as f:
-        f.write(public_pem)
+# Cargar la clave pública del TGS (esto sería preestablecido)
+with open("TGS_public_key.pem", "rb") as f:
+    TGS_public_key = RSA.import_key(f.read())
 
-def send_private_key_to_tgs():
-    # Simulación del envío de la llave privada usando la llave pública del TGS
-    with open("service_private_key.pem", "rb") as f:
-        private_key_data = f.read()
+# Generar una clave simétrica (AES)
+aes_key = get_random_bytes(32)
 
-    with open("tgs_public_key.pem", "rb") as f:
-        tgs_public_key_pem = f.read()
+# Cifrar la clave simétrica usando la clave pública del TGS
+cipher_rsa = PKCS1_OAEP.new(TGS_public_key)
+encrypted_aes_key = cipher_rsa.encrypt(aes_key)
 
-    tgs_public_key = serialization.load_pem_public_key(tgs_public_key_pem, backend=default_backend())
+# Cifrar la clave privada del Servidor de Servicios usando la clave simétrica (AES)
+cipher_aes = AES.new(aes_key, AES.MODE_EAX)
+nonce = cipher_aes.nonce
+ciphertext, tag = cipher_aes.encrypt_and_digest(private_key)
 
-    encrypted_private_key = tgs_public_key.encrypt(
-        private_key_data,
-        padding.OAEP(
-            mgf=padding.MGF1(algorithm=hashes.SHA256()),
-            algorithm=hashes.SHA256(),
-            label=None
-        )
-    )
+# Guardar la clave simétrica cifrada y la clave privada cifrada
+with open("encrypted_service_private_key.bin", "wb") as f:
+    f.write(nonce + tag + ciphertext)
 
-    with open("encrypted_service_private_key_to_tgs.bin", "wb") as f:
-        f.write(encrypted_private_key)
+with open("encrypted_aes_key_for_service.bin", "wb") as f:
+    f.write(encrypted_aes_key)
 
-generate_rsa_keypair_service()
-send_private_key_to_tgs()
+print("Llave privada del Servidor de Servicios generada y enviada al TGS (encrypted_service_private_key.bin y encrypted_aes_key_for_service.bin)")
