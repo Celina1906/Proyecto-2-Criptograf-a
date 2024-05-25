@@ -1,34 +1,28 @@
-import os
-import pickle
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from Crypto.Cipher import AES
+import json
 
-# Load TGS key
-with open('tgs_key.key', 'rb') as f:
-    tgs_key = f.read()
+# Definición de service_id
+service_id = "serviceABC"
 
-# Load message from TGS
-with open('message_to_tgs.bin', 'rb') as f:
-    encrypted_message = f.read()
+# Leer el mensaje 3
+with open("message3.bin", "rb") as f:
+    nonce, tag, ciphertext = [f.read(x) for x in (16, 16, -1)]
 
-# Extract IV and encrypted message
-iv = encrypted_message[:16]
-encrypted_message = encrypted_message[16:]
+# Cargar el TGT_key desde el archivo `message_to_TGS.json` (porque fue usado para encriptar el mensaje)
+with open("message_to_TGS.json", "r") as f:
+    TGT = json.load(f)
 
-# Decrypt message from TGS
-cipher = Cipher(algorithms.AES(tgs_key), modes.CFB8(iv))
-decryptor = cipher.decryptor()
-decrypted_message = decryptor.update(encrypted_message) + decryptor.finalize()
+TGT_key = bytes.fromhex(TGT["TGT_key"])
 
-# Deserialize decrypted message using pickle
-tgs_message = pickle.loads(decrypted_message)
+# Desencriptar el mensaje usando la llave TGT_key
+cipher = AES.new(TGT_key, AES.MODE_EAX, nonce=nonce)
+response = json.loads(cipher.decrypt_and_verify(ciphertext, tag).decode())
 
-# Generate SS response
-ss_response = f"Response to {tgs_message['service_id']} for {tgs_message['user_id']}"
+# Construir mensaje para el Servidor de Servicios
+ST = response["ST"]
 
-# Encrypt SS response with TGS key
-cipher = Cipher(algorithms.AES(tgs_key), modes.CFB8(iv))
-encryptor = cipher.encryptor()
-encrypted_ss_response = encryptor.update(ss_response.encode()) + encryptor.finalize()
+# Guardar el ST en un archivo
+with open("message_to_service.json", "w") as f:
+    json.dump(ST, f)
 
-with open('response_to_client.bin', 'wb') as f:
-    f.write(iv + encrypted_ss_response)
+print("Mensaje para el Servidor de Servicios generado y almacenado en message_to_service.json")

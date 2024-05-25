@@ -1,35 +1,23 @@
-import cryptography
-from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric import rsa
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.asymmetric import padding
-import os
+from Crypto.Cipher import AES
+import json
 
-def cargar_llave_privada(filename):
-    with open(filename, "rb") as key_file:
-        private_key = serialization.load_pem_private_key(
-            key_file.read(),
-            password=None
-        )
-    return private_key
+# Cargar la llave secreta del usuario desde el archivo
+with open("user_key.bin", "rb") as f:
+    user_key = f.read()
 
-def construir_mensaje_TGS():
-    # Cargar llave privada del TGS
-    llave_privada_TGS = cargar_llave_privada("llave_privada_TGS.pem")
+# Leer el mensaje 1
+with open("message1.bin", "rb") as f:
+    nonce, tag, ciphertext = [f.read(x) for x in (16, 16, -1)]
 
-    # Aquí se construiría el mensaje para enviar al TGS
-    mensaje = "Mensaje para el TGS"
-    mensaje_encriptado = llave_privada_TGS.sign(
-        mensaje.encode(),
-        padding.PSS(
-            mgf=padding.MGF1(hashes.SHA256()),
-            salt_length=padding.PSS.MAX_LENGTH
-        ),
-        hashes.SHA256()
-    )
-    # Guardar el mensaje en un archivo
-    with open("mensaje_para_TGS.txt", "wb") as f:
-        f.write(mensaje_encriptado)
+# Desencriptar el mensaje usando la llave secreta del usuario
+cipher = AES.new(user_key, AES.MODE_EAX, nonce=nonce)
+response = json.loads(cipher.decrypt_and_verify(ciphertext, tag).decode())
 
-if __name__ == "__main__":
-    construir_mensaje_TGS()
+# Construir mensaje para el TGS
+TGT = response["TGT"]
+
+# Guardar el TGT en un archivo
+with open("message_to_TGS.json", "w") as f:
+    json.dump(TGT, f)
+
+print("Mensaje para el TGS generado y almacenado en message_to_TGS.json")

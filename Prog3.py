@@ -1,44 +1,42 @@
-import os
-import pickle
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+import json
+from Crypto.Cipher import AES
+from Crypto.Random import get_random_bytes
 
-# Load client key
-with open('client_key.key', 'rb') as f:
-    client_key = f.read()
+# Definición de user_id y service_id
+user_id = "user123"
+service_id = "serviceABC"
 
-# Load message from TGS
-with open('message_to_tgs.bin', 'rb') as f:
-    encrypted_message = f.read()
+# Leer el mensaje para el TGS
+with open("message_to_TGS.json", "r") as f:
+    TGT = json.load(f)
 
-# Extract IV and encrypted message
-iv = encrypted_message[:16]
-encrypted_message = encrypted_message[16:]
+# Validar el TGT y generar mensajes para el cliente
+if TGT["user_id"] == user_id:
+    service_key = get_random_bytes(16)
+    timestamp = "2024-05-24T12:01:00"
 
-# Decrypt message from TGS
-cipher = Cipher(algorithms.AES(client_key), modes.CFB8(iv))
-decryptor = cipher.decryptor()
-decrypted_message = decryptor.update(encrypted_message) + decryptor.finalize()
-tgs_message = pickle.loads(decrypted_message)
+    # Mensaje 3: Service Ticket (ST)
+    ST = {
+        "service_id": service_id,
+        "service_key": service_key.hex(),
+        "timestamp": timestamp
+    }
 
-# Generate SS key
-ss_key = os.urandom(32)
-with open('ss_key.key', 'wb') as f:
-    f.write(ss_key)
+    # Mensaje 4: Respuesta para el cliente
+    response = {
+        "ST": ST,
+        "service_key": service_key.hex()
+    }
 
-# Message to SS
-ss_message = {
-    'user_id': tgs_message['user_id'],
-    'service_id': tgs_message['service_id'],
-    'ss_key': ss_key
-}
+    # Encriptar mensajes con la llave TGT_key
+    TGT_key = bytes.fromhex(TGT["TGT_key"])
+    cipher = AES.new(TGT_key, AES.MODE_EAX)
+    ciphertext, tag = cipher.encrypt_and_digest(json.dumps(response).encode())
 
-# Encrypt ss_message with TGS key
-with open('tgs_key.key', 'rb') as f:
-    tgs_key = f.read()
+    # Guardar mensajes en archivos
+    with open("message3.bin", "wb") as f:
+        [f.write(x) for x in (cipher.nonce, tag, ciphertext)]
 
-cipher = Cipher(algorithms.AES(tgs_key), modes.CFB8(iv))
-encryptor = cipher.encryptor()
-encrypted_ss_message = encryptor.update(pickle.dumps(ss_message)) + encryptor.finalize()
-
-with open('message_to_ss.bin', 'wb') as f:
-    f.write(iv + encrypted_ss_message)
+    print("Mensajes generados y almacenados en message3.bin")
+else:
+    print("Error: user_id no coincide.")

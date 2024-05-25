@@ -1,36 +1,32 @@
+from Crypto.Cipher import AES
 import json
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-from cryptography.hazmat.backends import default_backend
-import os
 
-def dialog_with_service():
-    with open("message_for_service.json", "r") as f:
-        message_for_service = json.load(f)
-    
-    service_session_key = bytes.fromhex(message_for_service["service_session_key"])
-    service_ticket = bytes.fromhex(message_for_service["service_ticket"])
+# Definición de service_id
+service_id = "serviceABC"
 
-    # Servidor de Servicios verifica el ticket y genera un mensaje
-    response_message = {
+# Leer el mensaje para el Servidor de Servicios
+with open("message_to_service.json", "r") as f:
+    ST = json.load(f)
+
+# Validar el ST y generar respuesta para el cliente
+if ST["service_id"] == service_id:
+    timestamp = "2024-05-24T12:02:00"
+
+    # Mensaje 5: Respuesta del Servidor de Servicios
+    response = {
         "status": "success",
-        "data": "Here is your service!"
+        "timestamp": timestamp
     }
 
-    response_encrypted = encrypt_data(json.dumps(response_message).encode(), service_session_key)
+    # Encriptar mensajes con la llave service_key
+    service_key = bytes.fromhex(ST["service_key"])
+    cipher = AES.new(service_key, AES.MODE_EAX)
+    ciphertext, tag = cipher.encrypt_and_digest(json.dumps(response).encode())
 
-    message3 = {
-        "response": response_encrypted.hex()
-    }
+    # Guardar mensaje en archivo
+    with open("message5.bin", "wb") as f:
+        [f.write(x) for x in (cipher.nonce, tag, ciphertext)]
 
-    with open("message3.json", "w") as f:
-        json.dump(message3, f)
-
-def encrypt_data(data, key):
-    iv = os.urandom(16)
-    cipher = Cipher(algorithms.AES(key), modes.CFB(iv), backend=default_backend())
-    encryptor = cipher.encryptor()
-    ciphertext = encryptor.update(data) + encryptor.finalize()
-    return iv + ciphertext
-
-dialog_with_service()
-
+    print("Respuesta del Servidor de Servicios generada y almacenada en message5.bin")
+else:
+    print("Error: service_id no coincide.")

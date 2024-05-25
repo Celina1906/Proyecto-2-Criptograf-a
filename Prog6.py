@@ -1,28 +1,22 @@
+from Crypto.Cipher import AES
 import json
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-from cryptography.hazmat.backends import default_backend
 
-def process_final_message():
-    with open("message3.json", "r") as f:
-        message3 = json.load(f)
-    
-    service_session_key = get_service_session_key()  # Implementación de obtener la llave de sesión de servicio
+# Leer el mensaje para el Servidor de Servicios para obtener el service_key
+with open("message_to_service.json", "r") as f:
+    ST = json.load(f)
 
-    response_encrypted = bytes.fromhex(message3["response"])
-    response_decrypted = decrypt_data(response_encrypted, service_session_key)
+service_key = bytes.fromhex(ST["service_key"])
 
-    print("Final Message: ", response_decrypted.decode())
+# Leer el mensaje 5
+with open("message5.bin", "rb") as f:
+    nonce, tag, ciphertext = [f.read(x) for x in (16, 16, -1)]
 
-def decrypt_data(data, key):
-    iv = data[:16]
-    ciphertext = data[16:]
-    cipher = Cipher(algorithms.AES(key), modes.CFB(iv), backend=default_backend())
-    decryptor = cipher.decryptor()
-    return decryptor.update(ciphertext) + decryptor.finalize()
+# Desencriptar el mensaje usando la llave service_key
+cipher = AES.new(service_key, AES.MODE_EAX, nonce=nonce)
+response = json.loads(cipher.decrypt_and_verify(ciphertext, tag).decode())
 
-def get_service_session_key():
-    # Esta función debe implementar la recuperación segura de la llave de sesión de servicio
-    return b'service_session_key'  # Esta es solo una simulación
-
-process_final_message()
-
+# Procesar el mensaje final
+if response["status"] == "success":
+    print("Acceso al servicio concedido. Timestamp:", response["timestamp"])
+else:
+    print("Acceso al servicio denegado.")

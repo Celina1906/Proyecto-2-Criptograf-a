@@ -1,52 +1,27 @@
-from cryptography.hazmat.primitives.asymmetric import rsa
-from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric import padding
-from cryptography.hazmat.primitives import hashes
+from Crypto.PublicKey import RSA
+from Crypto.Cipher import PKCS1_OAEP
+import json
 
-def generate_rsa_keypair_tgs():
-    private_key = rsa.generate_private_key(
-        public_exponent=65537,
-        key_size=2048,
-        backend=default_backend()
-    )
-    public_key = private_key.public_key()
+# Generar un par de llaves RSA para el TGS
+key = RSA.generate(2048)
+private_key = key.export_key()
+public_key = key.publickey().export_key()
 
-    private_pem = private_key.private_bytes(
-        encoding=serialization.Encoding.PEM,
-        format=serialization.PrivateFormat.TraditionalOpenSSL,
-        encryption_algorithm=serialization.NoEncryption()
-    )
-    public_pem = public_key.public_bytes(
-        encoding=serialization.Encoding.PEM,
-        format=serialization.PublicFormat.SubjectPublicKeyInfo
-    )
+# Guardar la llave privada en un archivo seguro
+with open("TGS_private_key.pem", "wb") as f:
+    f.write(private_key)
 
-    with open("tgs_private_key.pem", "wb") as f:
-        f.write(private_pem)
-    with open("tgs_public_key.pem", "wb") as f:
-        f.write(public_pem)
+# Supongamos que el AS ya tiene la clave pública del TGS
+# Cargar la clave pública del AS (esto sería preestablecido)
+with open("AS_public_key.pem", "rb") as f:
+    AS_public_key = RSA.import_key(f.read())
 
-def send_private_key_to_as():
-    # Simulación del envío de la llave privada usando la llave pública del AS
-    with open("tgs_private_key.pem", "rb") as f:
-        private_key_data = f.read()
+# Encriptar la llave privada del TGS usando la clave pública del AS
+cipher_rsa = PKCS1_OAEP.new(AS_public_key)
+encrypted_private_key = cipher_rsa.encrypt(private_key)
 
-    with open("as_public_key.pem", "rb") as f:
-        as_public_key_pem = f.read()
+# Guardar la llave privada encriptada en un archivo
+with open("encrypted_TGS_private_key.bin", "wb") as f:
+    f.write(encrypted_private_key)
 
-    as_public_key = serialization.load_pem_public_key(as_public_key_pem, backend=default_backend())
-
-    encrypted_private_key = as_public_key.encrypt(
-        private_key_data,
-        padding.OAEP(
-            mgf=padding.MGF1(algorithm=hashes.SHA256()),
-            algorithm=hashes.SHA256(),
-            label=None
-        )
-    )
-
-    with open("encrypted_tgs_private_key_to_as.bin", "wb") as f:
-        f.write(encrypted_private_key)
-
-generate_rsa_keypair_tgs()
-send_private_key_to_as()
+print("Llave privada del TGS generada y enviada al AS (encrypted_TGS_private_key.bin)")
