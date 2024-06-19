@@ -1,0 +1,24 @@
+[{
+  
+  "user_id": "001",
+  "user": "usuario1",
+  "contraseña": "password1"
+},
+{
+  
+  "user_id": "002",
+  "user": "usuario2",
+  "contraseña": "password2"
+},
+{
+  
+  "user_id": "003",
+  "user": "usuario3",
+  "contraseña": "password3"
+},
+{
+  
+  "user_id": "004",
+  "user": "usuario4",
+  "contraseña": "password4"
+}]

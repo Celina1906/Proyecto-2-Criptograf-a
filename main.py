@@ -10,18 +10,19 @@ def login():
     return user, password, service_id
 
 def main(user, password, service_id):
+    if(Prog1.exec(user, password)!=-1):
+        Prog2.exec()
+        Prog3.exec(user, password, service_id)
+        Prog4.exec()
+        Prog5.exec(service_id)
+        Prog6.exec()
+        Prog7.exec()
+        claves.generateAS()
+        claves.generateTGS()
+        Prog8.exec()
+        Prog9.exec()
+    
 
-    Prog1.exec(user, password)
-    Prog2.exec()
-    Prog3.exec(user, password, service_id)
-    Prog4.exec()
-    Prog5.exec(service_id)
-    Prog6.exec()
-    Prog7.exec()
-    claves.generateAS()
-    claves.generateTGS()
-    Prog8.exec()
-    Prog9.exec()
     
 ################### Main code #######################
 

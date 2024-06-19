@@ -3,8 +3,26 @@ from Crypto.Random import get_random_bytes
 import json
 import datetime
 
+def cargar_usuarios():
+    with open('AS/usuarios.json', 'r') as file:
+        usuarios = json.load(file)
+    return usuarios
 
 def exec(user_id, password):
+    # Cargar usuarios desde el archivo JSON
+    usuarios = cargar_usuarios()
+
+    # Verificar si el usuario existe
+    usuario = None
+    for user in usuarios:
+        if user["user_id"] == user_id:
+            usuario = user
+            break
+    
+    if usuario is None:
+        print(f"El usuario con ID {user_id} no existe, favor ingresar un usuario válido")
+        return -1
+    
     # Llave secreta del usuario (previamente compartida)
     user_key = get_random_bytes(16)
 
