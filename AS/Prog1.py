@@ -9,7 +9,7 @@ def exec(user_id, password):
     user_key = get_random_bytes(16)
 
     # Guardar user_key en un archivo seguro
-    with open("user_key.bin", "wb") as f:
+    with open("AS/user_key.bin", "wb") as f:
         f.write(user_key)
 
     # Mensajes que envía el AS al cliente
@@ -35,7 +35,7 @@ def exec(user_id, password):
     ciphertext, tag = cipher.encrypt_and_digest(json.dumps(response).encode())
 
     # Guardar mensajes en archivos
-    with open("message1.bin", "wb") as f:
+    with open("AS/message1.bin", "wb") as f:
         [f.write(x) for x in (cipher.nonce, tag, ciphertext)]
 
     print("Mensaje 1 generado y almacenado en message1.bin")

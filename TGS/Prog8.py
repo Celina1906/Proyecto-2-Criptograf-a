@@ -9,11 +9,11 @@ def exec():
     public_key = key.publickey().export_key()
 
     # Guardar la llave privada en un archivo seguro
-    with open("TGS_private_key.pem", "wb") as f:
+    with open("TGS/TGS_private_key.pem", "wb") as f:
         f.write(private_key)
 
     # Cargar la clave pública del AS (esto sería preestablecido)
-    with open("AS_public_key.pem", "rb") as f:
+    with open("TGS/AS_public_key.pem", "rb") as f:
         AS_public_key = RSA.import_key(f.read())
 
     # Generar una clave simétrica (AES)
@@ -29,10 +29,10 @@ def exec():
     ciphertext, tag = cipher_aes.encrypt_and_digest(private_key)
 
     # Guardar la clave simétrica encriptada y la clave privada encriptada
-    with open("encrypted_TGS_private_key.bin", "wb") as f:
+    with open("AS/encrypted_TGS_private_key.bin", "wb") as f:
         f.write(nonce + tag + ciphertext)
 
-    with open("encrypted_aes_key.bin", "wb") as f:
+    with open("AS/encrypted_aes_key.bin", "wb") as f:
         f.write(encrypted_aes_key)
 
     print("Llave privada del TGS generada y enviada al AS (encrypted_TGS_private_key.bin y encrypted_aes_key.bin)")

@@ -4,7 +4,7 @@ import datetime
 
 def exec(service_id):
     # Leer el mensaje para el Servidor de Servicios
-    with open("message_to_service.json", "r") as f:
+    with open("SS/message_to_service.json", "r") as f:
         ST = json.load(f)
 
     # Validar el ST y generar respuesta para el cliente
@@ -23,7 +23,7 @@ def exec(service_id):
         ciphertext, tag = cipher.encrypt_and_digest(json.dumps(response).encode())
 
         # Guardar mensaje en archivo
-        with open("message5.bin", "wb") as f:
+        with open("SS/message5.bin", "wb") as f:
             [f.write(x) for x in (cipher.nonce, tag, ciphertext)]
 
         print("Respuesta del Servidor de Servicios generada y almacenada en message5.bin")

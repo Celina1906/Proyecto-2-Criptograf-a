@@ -3,11 +3,11 @@ import json
 
 def exec():
     # Cargar la llave secreta del usuario desde el archivo
-    with open("user_key.bin", "rb") as f:
+    with open("AS/user_key.bin", "rb") as f:
         user_key = f.read()
 
     # Leer el mensaje 1
-    with open("message1.bin", "rb") as f:
+    with open("AS/message1.bin", "rb") as f:
         nonce, tag, ciphertext = [f.read(x) for x in (16, 16, -1)]
 
     # Desencriptar el mensaje usando la llave secreta del usuario
@@ -18,7 +18,7 @@ def exec():
     TGT = response["TGT"]
 
     # Guardar el TGT en un archivo
-    with open("message_to_TGS.json", "w") as f:
+    with open("TGS/message_to_TGS.json", "w") as f:
         json.dump(TGT, f)
 
     print("Mensaje para el TGS generado y almacenado en message_to_TGS.json")

@@ -3,13 +3,13 @@ import json
 
 def exec():
     # Leer el mensaje para el Servidor de Servicios para obtener el service_key
-    with open("message_to_service.json", "r") as f:
+    with open("SS/message_to_service.json", "r") as f:
         ST = json.load(f)
 
     service_key = bytes.fromhex(ST["service_key"])
 
     # Leer el mensaje 5
-    with open("message5.bin", "rb") as f:
+    with open("SS/message5.bin", "rb") as f:
         nonce, tag, ciphertext = [f.read(x) for x in (16, 16, -1)]
 
     # Desencriptar el mensaje usando la llave service_key

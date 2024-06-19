@@ -5,11 +5,11 @@ import json
 
 def exec():
     # Leer el mensaje 3
-    with open("message3.bin", "rb") as f:
+    with open("TGS/message3.bin", "rb") as f:
         nonce, tag, ciphertext = [f.read(x) for x in (16, 16, -1)]
 
     # Cargar el TGT_key desde el archivo `message_to_TGS.json` (porque fue usado para encriptar el mensaje)
-    with open("message_to_TGS.json", "r") as f:
+    with open("TGS/message_to_TGS.json", "r") as f:
         TGT = json.load(f)
 
     TGT_key = bytes.fromhex(TGT["TGT_key"])
@@ -22,7 +22,7 @@ def exec():
     ST = response["ST"]
 
     # Guardar el ST en un archivo
-    with open("message_to_service.json", "w") as f:
+    with open("SS/message_to_service.json", "w") as f:
         json.dump(ST, f)
 
     print("Mensaje para el Servidor de Servicios generado y almacenado en message_to_service.json")

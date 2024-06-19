@@ -3,11 +3,11 @@ from Crypto.Cipher import AES
 
 def exec():
     # Leer el mensaje final procesado por el cliente
-    with open("message5.bin", "rb") as f:
+    with open("SS/message5.bin", "rb") as f:
         nonce, tag, ciphertext = [f.read(x) for x in (16, 16, -1)]
 
     # Leer el message_to_service.json para obtener la service_key
-    with open("message_to_service.json", "r") as f:
+    with open("SS/message_to_service.json", "r") as f:
         ST = json.load(f)
 
     service_key = bytes.fromhex(ST["service_key"])
