@@ -15,7 +15,7 @@ def exec(user_id, password):
     # Verificar si el usuario existe
     usuario = None
     for user in usuarios:
-        if user["user_id"] == user_id:
+        if user["user_id"] == user_id and user["contrasena"] == password:
             usuario = user
             break
     
